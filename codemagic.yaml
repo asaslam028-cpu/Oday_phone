@@ -8,9 +8,123 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Get Flutter packages
+      - name: Set up project
         script: |
           flutter create . --platforms=android
+          cat > lib/main.dart << 'DART'
+          import 'package:flutter/material.dart';
+          import 'package:url_launcher/url_launcher.dart';
+
+          void main() => runApp(OdayPhoneApp());
+
+          class OdayPhoneApp extends StatelessWidget {
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'عدي فون',
+                theme: ThemeData(primaryColor: Color(0xFF0D47A1), scaffoldBackgroundColor: Color(0xFFF5F7FB)),
+                home: MainScreen(),
+              );
+            }
+          }
+
+          class MainScreen extends StatefulWidget {
+            @override
+            _MainScreenState createState() => _MainScreenState();
+          }
+
+          class _MainScreenState extends State<MainScreen> {
+            int _index = 0;
+            final _pages = [HomePage(), StorePage(), MandobPage()];
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                body: _pages[_index],
+                bottomNavigationBar: BottomNavigationBar(
+                  currentIndex: _index,
+                  onTap: (i) => setState(() => _index = i),
+                  selectedItemColor: Color(0xFF0D47A1),
+                  items: [
+                    BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
+                    BottomNavigationBarItem(icon: Icon(Icons.store), label: 'المتجر'),
+                    BottomNavigationBarItem(icon: Icon(Icons.motorcycle), label: 'اطلب مندوب'),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class HomePage extends StatelessWidget {
+            _openWhats(String msg) async {
+              final url = Uri.parse('https://wa.me/201069068091?text=${Uri.encodeComponent(msg)}');
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: Text('عدي فون - ابو المطامير'), centerTitle: true, backgroundColor: Color(0xFF0D47A1)),
+                body: ListView(padding: EdgeInsets.all(16), children: [
+                  Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Color(0xFF0D47A1), borderRadius: BorderRadius.circular(20)), child: Column(children: [Icon(Icons.phone_android, size: 70, color: Colors.white), SizedBox(height: 10), Text('عدي فون لصيانة المحمول', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)), SizedBox(height: 5), Text('أسرع صيانة - أفضل سعر - مندوب لحد البيت', style: TextStyle(color: Colors.white70))])),
+                  SizedBox(height: 20),
+                  ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: () => _openWhats('السلام عليكم - عايز استفسر عن خدمة عدي فون'), icon: Icon(Icons.chat, color: Colors.white), label: Text('تواصل واتساب: 01069068091', style: TextStyle(color: Colors.white, fontSize: 16))),
+                ]),
+              );
+            }
+          }
+
+          class StorePage extends StatelessWidget {
+            final products = [
+              {"name": "سكرينات و باغات", "price": "يبدأ من 250 ج"},
+              {"name": "بطاريات أصلية", "price": "يبدأ من 400 ج"},
+              {"name": "جرابات و اكسسوارات", "price": "يبدأ من 50 ج"},
+            ];
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(appBar: AppBar(title: Text('متجر عدي فون'), backgroundColor: Color(0xFF0D47A1)), body: ListView.builder(itemCount: products.length, itemBuilder: (c,i)=> Card(margin: EdgeInsets.all(8), child: ListTile(leading: Icon(Icons.shopping_bag, color: Color(0xFF0D47A1)), title: Text(products[i]['name']!), subtitle: Text(products[i]['price']!, style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))))));
+            }
+          }
+
+          class MandobPage extends StatefulWidget {
+            @override
+            _MandobPageState createState() => _MandobPageState();
+          }
+
+          class _MandobPageState extends State<MandobPage> {
+            final _device = TextEditingController();
+            final _fault = TextEditingController();
+            final _address = TextEditingController();
+            final _phone = TextEditingController();
+            void _send() {
+              if(_device.text.isEmpty || _fault.text.isEmpty || _address.text.isEmpty || _phone.text.isEmpty){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('اكمل كل البيانات'))); return; }
+              String msg = "طلب مندوب جديد - عدي فون 📱\n\nاسم الجهاز: ${_device.text}\nنوع العطل: ${_fault.text}\nالعنوان: ${_address.text}\nرقم العميل: ${_phone.text}\n\nارجو التواصل بسرعة";
+              final url = Uri.parse('https://wa.me/201069068091?text=${Uri.encodeComponent(msg)}');
+              launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: Text('اطلب مندوب للمنزل'), backgroundColor: Color(0xFF0D47A1)),
+                body: ListView(padding: EdgeInsets.all(20), children: [
+                  Icon(Icons.motorcycle, size: 80, color: Color(0xFF0D47A1)),
+                  SizedBox(height: 10),
+                  Text('مندوب عدي فون هيجيلك لحد البيت', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 20),
+                  TextField(controller: _device, decoration: InputDecoration(labelText: 'اسم الجهاز', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone_android))),
+                  SizedBox(height: 12),
+                  TextField(controller: _fault, decoration: InputDecoration(labelText: 'نوع العطل', border: OutlineInputBorder(), prefixIcon: Icon(Icons.build))),
+                  SizedBox(height: 12),
+                  TextField(controller: _address, decoration: InputDecoration(labelText: 'العنوان - ابو المطامير', border: OutlineInputBorder(), prefixIcon: Icon(Icons.location_on))),
+                  SizedBox(height: 12),
+                  TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'رقم تليفونك', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone))),
+                  SizedBox(height: 20),
+                  ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0D47A1), padding: EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: _send, child: Text('اطلب المندوب الان على واتساب', style: TextStyle(fontSize: 18, color: Colors.white))),
+                ]),
+              );
+            }
+          }
+          DART
+          flutter pub add url_launcher
           flutter pub get
       - name: Build APK
         script: flutter build apk --release
